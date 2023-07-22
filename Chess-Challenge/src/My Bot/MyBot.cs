@@ -36,8 +36,18 @@ public class MyBot : IChessBot
 
         Move[] moves = board.GetLegalMoves();
         int best = -30000;
+        int[] scores = new int[moves.Length];
+        for(int i = 0; i < moves.Length; i++)
+            scores[i] = 100 * moves[i].TargetSquare.Index - moves[i].StartSquare.Index;
         for(int i = 0; i < moves.Length; i++) {
             if(depth > 2 && timer.MillisecondsElapsedThisTurn >= timer.MillisecondsRemaining / 30) return 0;
+
+            int ind = i;
+            for(int j = i + 1; j < moves.Length; j++) {
+                if(scores[j] > scores[ind]) ind = j;
+            }
+            (scores[i], scores[ind]) = (scores[ind], scores[i]);
+            (moves[i], moves[ind]) = (moves[ind], moves[i]);
 
             Move move = moves[i];
             board.MakeMove(move);
@@ -66,7 +76,7 @@ public class MyBot : IChessBot
             int score = Search(board, timer, -30000, 30000, depth, 0);
             if(timer.MillisecondsElapsedThisTurn >= timer.MillisecondsRemaining / 30)
                 break;
-            //Console.WriteLine($"info depth {depth} score cp {score} time {timer.MillisecondsElapsedThisTurn} pv {bestmoveRoot}");
+            Console.WriteLine($"info depth {depth} score cp {score} time {timer.MillisecondsElapsedThisTurn} pv {bestmoveRoot}");
             bestMove = bestmoveRoot;
         }
         return bestMove;
