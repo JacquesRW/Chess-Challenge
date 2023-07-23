@@ -1,2 +1,2 @@
 all: 
-	dotnet build -c Release Chess-Challenge
+	dotnet publish -c Release Chess-Challenge --self-contained true
