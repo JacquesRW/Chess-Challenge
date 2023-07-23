@@ -77,7 +77,14 @@ public class MyBot : IChessBot
         }
 
         else if (!board.IsInCheck() && depth <= 6 && evl - 100*depth >= beta) return evl;
-
+        
+        if (depth >= 3 && notRoot && board.TrySkipTurn()) {
+            int score = -Search(board, timer, -beta, -beta + 1, depth - 3, ply + 1);
+            board.UndoSkipTurn();
+            if (score >= beta)
+                return beta;
+        }
+        
         Move[] moves = board.GetLegalMoves(qsearch);
         int[] scores = new int[moves.Length];
 
