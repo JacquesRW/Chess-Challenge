@@ -54,8 +54,9 @@ public class MyBot : IChessBot
         hashStack[board.PlyCount] = key;
         bool qsearch = (depth <= 0);
         int best = -30000;
+        bool notRoot = ply > 0;
 
-        if(ply > 0) {
+        if (notRoot) {
             for(int i = board.PlyCount - 2; i >= 0; i -= 2) {
                 if(hashStack[i] == hashStack[board.PlyCount])
                     return 0;
@@ -80,6 +81,13 @@ public class MyBot : IChessBot
         for(int i = 0; i < moves.Length; i++) {
             if(moves[i] == entry.move) scores[i] = 1000000;
             else if(moves[i].IsCapture) scores[i] = 100 * moves[i].TargetSquare.Index - moves[i].StartSquare.Index;
+        }
+        
+        if (depth >= 3 && notRoot && board.TrySkipTurn()) {
+            int score = -Search(board, timer, -beta, -beta + 1, depth - 3, ply + 1);
+            board.UndoSkipTurn();
+            if (score >= beta)
+                return beta;
         }
 
         Move bestMove = Move.NullMove;
