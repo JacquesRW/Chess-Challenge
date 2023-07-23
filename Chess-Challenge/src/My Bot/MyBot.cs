@@ -84,7 +84,7 @@ public class MyBot : IChessBot
         }
         
         if (depth >= 3 && notRoot && board.TrySkipTurn()) {
-            int score = -Search(board, timer, -beta, -beta + 1, depth - (3 + depth / 4), ply + 1);
+            int score = -Search(board, timer, -beta, -beta + 1, depth - 3, ply + 1);
             board.UndoSkipTurn();
             if (score >= beta)
                 return beta;
