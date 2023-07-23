@@ -1,2 +1,2 @@
 all: 
-	dotnet publish -c Release Chess-Challenge -p:PublishSingleFile=true --self-contained true
+	dotnet publish -c Release Chess-Challenge -o ./bnuuy-chess-challenge/ -p:PublishSingleFile=true --self-contained true

@@ -2,6 +2,7 @@
 .idea
 .vscode
 *.pgn
+/bnuuy-chess-challenge
 
 
 ## Ignore Visual Studio temporary files, build results, and
