@@ -91,7 +91,7 @@ public class MyBot : IChessBot
 
         for(int i = 0; i < moves.Length; i++) {
             if(moves[i] == entry.move) scores[i] = 1000000;
-            else if(moves[i].IsCapture) scores[i] = 100 * moves[i].TargetSquare.Index - moves[i].StartSquare.Index;
+            else if(moves[i].IsCapture) scores[i] = 100 * (int)board.GetPiece(moves[i].TargetSquare).PieceType - (int)board.GetPiece(moves[i].StartSquare).PieceType;
         }
 
         Move bestMove = Move.NullMove;
@@ -136,8 +136,8 @@ public class MyBot : IChessBot
             int score = Search(board, timer, -30000, 30000, depth, 0);
             if(timer.MillisecondsElapsedThisTurn >= timer.MillisecondsRemaining / 30)
                 break;
-            /*if(timer.MillisecondsElapsedThisTurn != 0)
-                Console.WriteLine($"info depth {depth} score cp {score} time {timer.MillisecondsElapsedThisTurn} pv {bestmoveRoot} nodes {nodes} nps {nodes * 1000 / (ulong)timer.MillisecondsElapsedThisTurn}");*/
+            if(timer.MillisecondsElapsedThisTurn != 0)
+                Console.WriteLine($"info depth {depth} score cp {score} time {timer.MillisecondsElapsedThisTurn} pv {bestmoveRoot} nodes {nodes} nps {nodes * 1000 / (ulong)timer.MillisecondsElapsedThisTurn}");
             bestMove = bestmoveRoot;
         }
         return bestMove;
