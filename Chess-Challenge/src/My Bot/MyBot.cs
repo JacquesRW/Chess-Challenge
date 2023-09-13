@@ -1,4 +1,4 @@
-﻿using ChessChallenge.API;
+using ChessChallenge.API;
 using System;
 
 public class MyBot : IChessBot
@@ -70,13 +70,18 @@ public class MyBot : IChessBot
 #if UCI
             nodes++;
 #endif
-            ulong key = board.ZobristKey % 1048576, moveIdx = 0;
+            ulong moveIdx = 0;
 
             if (ply > 0 && board.IsRepeatedPosition())
                 return 0;
 
             if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
                 return alpha;
+
+            ref var hashMove = ref tt[board.ZobristKey % 1048576];
+
+            if (hashMove.IsNull)
+                depth--;
 
             var moves = board.GetLegalMoves(qs);
 
@@ -85,15 +90,17 @@ public class MyBot : IChessBot
 
             var scores = new int[moves.Length];
             foreach (Move move in moves)
-                scores[moveIdx++] =
-                      move == tt[key] ? -1000000
-                    : move.IsCapture ? (int)move.MovePieceType - 100 * (int)move.CapturePieceType
-                    : move == killers[ply] ? 500000
-                    : 1000000;
+                scores[moveIdx++] = move == hashMove
+                    ? -1000000
+                    : move.IsCapture
+                        ? (int)move.MovePieceType - 100 * (int)move.CapturePieceType
+                        : move == killers[ply]
+                            ? 500000
+                            : 1000000;
 
             Array.Sort(scores, moves);
 
-            tt[key] = default;
+            hashMove = default;
 
             foreach (Move move in moves)
             {
@@ -107,7 +114,7 @@ public class MyBot : IChessBot
                 if (score > alpha)
                 {
                     alpha = score;
-                    tt[key] = move;
+                    hashMove = move;
                     if (ply == 0) bestMoveRoot = move;
                     if (alpha >= beta)
                     {
