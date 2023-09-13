@@ -68,7 +68,7 @@ public class MyBot : IChessBot
 #if UCI
             nodes++;
 #endif
-            ulong key = board.ZobristKey % 1048576;
+            ulong key = board.ZobristKey % 1048576, moveIdx = 0;
 
             if (!root && board.IsRepeatedPosition())
                 return 0;
@@ -85,10 +85,9 @@ public class MyBot : IChessBot
                 return board.IsInCheck() ? ply - 30_000 : 0;
 
             var scores = new int[moves.Length];
-            for (int i = 0; i < moves.Length; i++)
+            foreach (Move move in moves)
             {
-                Move move = moves[i];
-                scores[i] = move == tt[key]
+                scores[moveIdx++] = move == tt[key]
                     ? -1000000
                     : move.IsCapture
                         ? (int)move.MovePieceType - 100 * (int)move.CapturePieceType
@@ -136,29 +135,20 @@ public class MyBot : IChessBot
             updateAccumulator(0, 768);
             updateAccumulator(1, 768);
 
-            foreach (bool side in new[] { true, false })
-                for (var p = 1; p <= 6; p++)
-                {
-                    int piece = p * 64 - 64, whiteOffset = side ? 0 : 384;
-                    ulong mask = board.GetPieceBitboard((PieceType)p, side);
-                    while (mask != 0)
+            for (int stm = 2; --stm >= 0;)
+                for (var p = 0; p <= 5; p++)
+                    for (ulong mask = board.GetPieceBitboard((PieceType)p + 1, stm > 0); mask != 0;)
                     {
                         int sq = BitboardHelper.ClearAndGetIndexOfLSB(ref mask);
-                        updateAccumulator(0, whiteOffset + piece + sq);
-                        updateAccumulator(1, 384 - whiteOffset + piece + (sq ^ 56));
+                        updateAccumulator(0, 384 - stm * 384 + p * 64 + sq);
+                        updateAccumulator(1, stm * 384 + p * 64 + (sq ^ 56));
                     }
-                }
 
-            int eval = weights[6168], stm = board.IsWhiteToMove ? 0 : 1;
+            int eval = weights[6168];
 
-            void flattenAccumulator(int side, int offset)
-            {
-                for (int i = 0; i < 8; i++)
-                    eval += Math.Clamp(accumulators[side, i], 0, 32) * weights[6152 + offset + i];
-            }
+            for (int i = 0; i < 16;)
+                eval += Math.Clamp(accumulators[i / 8 ^ (board.IsWhiteToMove ? 0 : 1), i % 8], 0, 32) * weights[6152 + i++];
 
-            flattenAccumulator(stm, 0);
-            flattenAccumulator(1 - stm, 8);
 
             return eval * 400 / 1024;
         }
