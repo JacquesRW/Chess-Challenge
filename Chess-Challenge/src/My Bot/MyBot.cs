@@ -28,23 +28,23 @@ public class MyBot : IChessBot
 
     public Move ThinkInternal(Board board, Timer timer, int maxDepth = 50, bool report = true)
 #else
-    public Move Think(Board board, Timer timer)
+    public Move Think(Board board, ChessChallenge.API.Timer timer)
 #endif
     {
         Move bestMoveRoot = default;
         var killers = new Move[128];
-
+        int maxTime = timer.MillisecondsRemaining / 30, iterDepth = 1;
 #if UCI
         nodes = 0;
         for (int depth = 0; ++depth <= maxDepth && timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30;)
 #else
-        for (int depth = 0; ++depth <= 50 && timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30;)
+        while (timer.MillisecondsElapsedThisTurn < maxTime)
 #endif
         {
 #if UCI
             int score =
 #endif
-            Search(-30000, 30000, depth, 0);
+            Search(-30000, 30000, iterDepth++, 0);
 #if UCI
             if (report && timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30)
             {
@@ -85,13 +85,11 @@ public class MyBot : IChessBot
 
             var scores = new int[moves.Length];
             foreach (Move move in moves)
-                scores[moveIdx++] = move == tt[key]
-                    ? -1000000
-                    : move.IsCapture
-                        ? (int)move.MovePieceType - 100 * (int)move.CapturePieceType
-                        : move == killers[ply]
-                            ? 500000
-                            : 1000000;
+                scores[moveIdx++] =
+                      move == tt[key] ? -1000000
+                    : move.IsCapture ? (int)move.MovePieceType - 100 * (int)move.CapturePieceType
+                    : move == killers[ply] ? 500000
+                    : 1000000;
 
             Array.Sort(scores, moves);
 
@@ -99,7 +97,7 @@ public class MyBot : IChessBot
 
             foreach (Move move in moves)
             {
-                if (timer.MillisecondsElapsedThisTurn >= timer.MillisecondsRemaining / 10)
+                if (timer.MillisecondsElapsedThisTurn >= maxTime * 2)
                     return 30000;
 
                 board.MakeMove(move);
@@ -111,7 +109,8 @@ public class MyBot : IChessBot
                     alpha = score;
                     tt[key] = move;
                     if (ply == 0) bestMoveRoot = move;
-                    if (alpha >= beta) {
+                    if (alpha >= beta)
+                    {
                         if (!move.IsCapture)
                             killers[ply] = move;
                         break;
