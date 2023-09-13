@@ -73,11 +73,8 @@ public class MyBot : IChessBot
             if (!root && board.IsRepeatedPosition())
                 return 0;
 
-            if (qs)
-            {
-                alpha = Math.Max(alpha, Evaluate());
-                if (alpha >= beta) return alpha;
-            }
+            if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
+                return alpha;
 
             var moves = board.GetLegalMoves(qs);
 
@@ -128,8 +125,8 @@ public class MyBot : IChessBot
 
             void updateAccumulator(int side, int feature)
             {
-                for (int i = 0; i < 8; i++)
-                    accumulators[side, i] += weights[feature * 8 + i];
+                for (int i = 0; i < 8;)
+                    accumulators[side, i] += weights[feature * 8 + i++];
             }
 
             updateAccumulator(0, 768);
