@@ -71,6 +71,7 @@ public class MyBot : IChessBot
         {
             bool inCheck = board.IsInCheck();
 
+            // Check extensions
             if (inCheck)
                 depth++;
 
@@ -81,31 +82,31 @@ public class MyBot : IChessBot
             ulong key = board.ZobristKey, moveIdx = 0;
             var (ttKey, ttMove, ttDepth, score, ttFlag) = tt[key % 1048576];
 
-            if (ply > 0)
-            {
-                if (board.IsRepeatedPosition())
-                    return 0;
+            // Check for draw by repetition
+            if (ply > 0 && board.IsRepeatedPosition())
+                return 0;
 
-                // Stand Pat
-                if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
-                    return alpha;
+            // Stand Pat
+            if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
+                return alpha;
 
-                if (beta - alpha == 1
-                    && ttKey == key
-                    && ttDepth >= depth
-                    && (ttFlag == 0 && score <= alpha
-                        || ttFlag == 2 && score >= beta
-                        || ttFlag == 1))
-                    return score;
+            // TT Cutoffs
+            if (beta - alpha == 1
+                && ttKey == key
+                && ttDepth >= depth
+                && (ttFlag == 0 && score <= alpha
+                    || ttFlag == 2 && score >= beta
+                    || ttFlag == 1))
+                return score;
 
-                // Reverse Futility Pruning
-                if (!qs
-                    && !inCheck
-                    && depth <= 8
-                    && Evaluate() >= beta + 120 * depth)
-                    return beta;
-            }
+            // Reverse Futility Pruning
+            if (!qs
+                && !inCheck
+                && depth <= 8
+                && Evaluate() >= beta + 120 * depth)
+                return beta;
 
+            // Generate moves
             var moves = board.GetLegalMoves(qs);
 
             // Checkmate/Stalemate
