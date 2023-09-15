@@ -90,7 +90,8 @@ public class MyBot : IChessBot
                 if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
                     return alpha;
 
-                if (ttKey == key
+                if (beta - alpha == 1
+                    && ttKey == key
                     && ttDepth >= depth
                     && (ttFlag == 0 && score <= alpha
                         || ttFlag == 2 && score >= beta
