@@ -113,7 +113,7 @@ namespace ChessChallenge.Application
 
                 foreach (string fen in fens) {
                     Board board = Board.CreateBoardFromFEN(fen);
-                    bot.ThinkInternal(board, timer, 4, false);
+                    bot.ThinkInternal(board, timer, 7, false);
                     nodes += bot.nodes;
                 }
 
