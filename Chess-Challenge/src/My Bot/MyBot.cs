@@ -8,7 +8,7 @@ public class MyBot : IChessBot
 #endif
 
     readonly int[] weights = new int[3097];
-    readonly Move[] tt = new Move[1048576];
+    readonly (ulong, Move, int, int, byte)[] tt = new (ulong, Move, int, int, byte)[1048576];
 
     public MyBot()
     {
@@ -78,7 +78,7 @@ public class MyBot : IChessBot
 #if UCI
             nodes++;
 #endif
-            int moveIdx = 0, score;
+            int moveIdx = 0;
 
             if (ply > 0 && board.IsRepeatedPosition())
                 return 0;
@@ -87,6 +87,17 @@ public class MyBot : IChessBot
             if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
                 return alpha;
 
+            ulong key = board.ZobristKey;
+            var (ttKey, ttMove, ttDepth, score, ttFlag) = tt[key % 1048576];
+
+            if (ttKey == key
+                && ttDepth >= depth
+                && ply > 0
+                && (ttFlag == 0 && score <= alpha
+                    || ttFlag == 2 && score >= beta
+                    || ttFlag == 1))
+                return score;
+
             // Reverse Futility Pruning
             if (!qs
                 && !inCheck
@@ -94,19 +105,17 @@ public class MyBot : IChessBot
                 && Evaluate() >= beta + 120 * depth)
                 return beta;
 
-            ref var hashMove = ref tt[board.ZobristKey % 1048576];
-
             var moves = board.GetLegalMoves(qs);
 
             // Checkmate/Stalemate
-            if (!qs && moves.Length == 0)
-                return inCheck ? ply - 30_000 : 0;
+            if (moves.Length == 0)
+                return qs ? alpha : inCheck ? ply - 30_000 : 0;
 
             // Score moves
             var scores = new int[moves.Length];
             foreach (Move move in moves)
                 scores[moveIdx++] = -(
-                    move == hashMove
+                    move == ttMove
                         ? 100_000_000
                         : move.IsCapture
                             ? 90_000_000 + 100 * (int)move.CapturePieceType - (int)move.MovePieceType
@@ -117,8 +126,9 @@ public class MyBot : IChessBot
 
             Array.Sort(scores, moves);
 
-            Move bestMove = default;
+            ttMove = default;
             moveIdx = 0;
+            ttFlag = 0;
 
             foreach (Move move in moves)
             {
@@ -140,10 +150,11 @@ public class MyBot : IChessBot
                 if (score > alpha)
                 {
                     alpha = score;
-                    bestMove = move;
+                    ttMove = move;
+                    ttFlag = 1;
 
                     if (ply == 0)
-                        bestMoveRoot = bestMove;
+                        bestMoveRoot = move;
 
                     if (alpha >= beta)
                     {
@@ -154,12 +165,14 @@ public class MyBot : IChessBot
                             history[ply % 2, move.StartSquare.Index, move.TargetSquare.Index] += depth;
                         }
 
+                        ttFlag++;
+
                         break;
                     }
                 }
             }
 
-            hashMove = bestMove;
+            tt[key % 1048576] = (key, ttMove, depth, alpha, ttFlag);
 
             return alpha;
         }
