@@ -201,7 +201,7 @@ public class MyBot : IChessBot
                         int sq = BitboardHelper.ClearAndGetIndexOfLSB(ref mask);
 
                         // Input is horizontally mirrored
-                        sq = sq / 8 * 4 + (int)(0x1BE4 >> 2 * (sq & 7) & 3);
+                        sq = sq / 8 * 4 + (0x1BE4 >> 2 * (sq & 7) & 3);
 
                         // Add feature from each perspective
                         updateAccumulator(0, 192 - stm * 192 + p * 32 + sq);
