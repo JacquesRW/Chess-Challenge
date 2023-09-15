@@ -127,8 +127,7 @@ public class MyBot : IChessBot
             Array.Sort(scores, moves);
 
             ttMove = default;
-            moveIdx = 0;
-            ttFlag = 0;
+            moveIdx = ttFlag = 0;
 
             foreach (Move move in moves)
             {
