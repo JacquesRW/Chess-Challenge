@@ -78,32 +78,32 @@ public class MyBot : IChessBot
 #if UCI
             nodes++;
 #endif
-            int moveIdx = 0;
-
-            if (ply > 0 && board.IsRepeatedPosition())
-                return 0;
-
-            // Stand Pat
-            if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
-                return alpha;
-
-            ulong key = board.ZobristKey;
+            ulong key = board.ZobristKey, moveIdx = 0;
             var (ttKey, ttMove, ttDepth, score, ttFlag) = tt[key % 1048576];
 
-            if (ttKey == key
-                && ttDepth >= depth
-                && ply > 0
-                && (ttFlag == 0 && score <= alpha
-                    || ttFlag == 2 && score >= beta
-                    || ttFlag == 1))
-                return score;
+            if (ply > 0)
+            {
+                if (board.IsRepeatedPosition())
+                    return 0;
 
-            // Reverse Futility Pruning
-            if (!qs
-                && !inCheck
-                && depth <= 8
-                && Evaluate() >= beta + 120 * depth)
-                return beta;
+                // Stand Pat
+                if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
+                    return alpha;
+
+                if (ttKey == key
+                    && ttDepth >= depth
+                    && (ttFlag == 0 && score <= alpha
+                        || ttFlag == 2 && score >= beta
+                        || ttFlag == 1))
+                    return score;
+
+                // Reverse Futility Pruning
+                if (!qs
+                    && !inCheck
+                    && depth <= 8
+                    && Evaluate() >= beta + 120 * depth)
+                    return beta;
+            }
 
             var moves = board.GetLegalMoves(qs);
 
