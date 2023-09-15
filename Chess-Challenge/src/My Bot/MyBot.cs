@@ -118,9 +118,9 @@ public class MyBot : IChessBot
             foreach (Move move in moves)
                 scores[moveIdx++] = -(
                     move == ttMove
-                        ? 100_000_000
+                        ? 900_000_000
                         : move.IsCapture
-                            ? 90_000_000 + 100 * (int)move.CapturePieceType - (int)move.MovePieceType
+                            ? 100_000_000 * (int)move.CapturePieceType - (int)move.MovePieceType
                             : move == killers[ply]
                                 ? 80_000_000
                                 : history[ply % 2, move.StartSquare.Index, move.TargetSquare.Index]
