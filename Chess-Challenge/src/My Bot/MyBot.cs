@@ -79,7 +79,7 @@ public class MyBot : IChessBot
 #if UCI
             nodes++;
 #endif
-            ulong key = board.ZobristKey, moveIdx = 0;
+            ulong key = board.ZobristKey;
             var (ttKey, ttMove, ttDepth, score, ttFlag) = tt[key % 1048576];
 
             // Check for draw by repetition
@@ -112,6 +112,7 @@ public class MyBot : IChessBot
                 return qs ? alpha : inCheck ? ply - 30_000 : 0;
 
             // Score moves
+            int moveIdx = 0;
             var scores = new int[moves.Length];
             foreach (Move move in moves)
                 scores[moveIdx++] = -(
@@ -141,7 +142,7 @@ public class MyBot : IChessBot
                     || qs
                     || depth < 2
                     || move.IsCapture
-                    || (score = -Search(-alpha - 1, -alpha, depth - 2, ply + 1)) > alpha)
+                    || (score = -Search(-alpha - 1, -alpha, depth - 2 - moveIdx / 16, ply + 1)) > alpha)
                     score = -Search(-beta, -alpha, depth - 1, ply + 1);
 
                 board.UndoMove(move);
