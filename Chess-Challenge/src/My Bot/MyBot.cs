@@ -94,9 +94,7 @@ public class MyBot : IChessBot
             if (beta - alpha == 1
                 && ttKey == key
                 && ttDepth >= depth
-                && (ttFlag == 0 && score <= alpha
-                    || ttFlag == 2 && score >= beta
-                    || ttFlag == 1))
+                && (score >= beta ? ttFlag > 0 : ttFlag < 2))
                 return score;
 
             // Reverse Futility Pruning
