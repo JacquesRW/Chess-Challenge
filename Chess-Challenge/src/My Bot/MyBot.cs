@@ -81,13 +81,16 @@ public class MyBot : IChessBot
 #endif
             ulong key = board.ZobristKey;
             var (ttKey, ttMove, ttDepth, score, ttFlag) = tt[key % 1048576];
+            int bestScore = -30000;
 
             // Check for draw by repetition
-            if (ply > 0 && board.IsRepeatedPosition())
+            if (ply > 0
+                && board.IsRepeatedPosition())
                 return 0;
 
             // Stand Pat
-            if (qs && (alpha = Math.Max(alpha, Evaluate())) >= beta)
+            if (qs
+                && (bestScore = alpha = Math.Max(alpha, Evaluate())) >= beta)
                 return alpha;
 
             // TT Cutoffs
@@ -147,34 +150,38 @@ public class MyBot : IChessBot
 
                 board.UndoMove(move);
 
-                if (score > alpha)
+                if (score > bestScore)
                 {
-                    alpha = score;
+                    bestScore = score;
                     ttMove = move;
-                    ttFlag = 1;
-
-                    if (ply == 0)
-                        bestMoveRoot = move;
-
-                    if (alpha >= beta)
+                    if (score > alpha)
                     {
-                        // Quiet cutoffs update tables
-                        if (!move.IsCapture)
+                        alpha = score;
+                        ttFlag = 1;
+
+                        if (ply == 0)
+                            bestMoveRoot = move;
+
+                        if (alpha >= beta)
                         {
-                            killers[ply] = move;
-                            history[ply % 2, move.RawValue & 4095] += depth;
+                            // Quiet cutoffs update tables
+                            if (!move.IsCapture)
+                            {
+                                killers[ply] = move;
+                                history[ply % 2, move.RawValue & 4095] += depth;
+                            }
+
+                            ttFlag++;
+
+                            break;
                         }
-
-                        ttFlag++;
-
-                        break;
                     }
                 }
             }
 
-            tt[key % 1048576] = (key, ttMove, depth, alpha, ttFlag);
+            tt[key % 1048576] = (key, ttMove, depth, bestScore, ttFlag);
 
-            return alpha;
+            return bestScore;
         }
 
         int Evaluate()
