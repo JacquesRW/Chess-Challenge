@@ -159,7 +159,7 @@ public class MyBot : IChessBot
         int Evaluate()
         {
             var accumulators = new int[2, 8];
-            int mat = 0;
+            int mat = 0, bucket = -2;
 
             // Adds a feature (colour, piece, square) to given accumulator
             void updateAccumulator(int side, int feature)
@@ -172,29 +172,30 @@ public class MyBot : IChessBot
             updateAccumulator(0, 768);
             updateAccumulator(1, 768);
 
-            for (int stm = 2; --stm >= 0;)
+            for (int stm = 768; (stm -= 384) >= 0;)
             {
                 for (var p = 0; p <= 5; p++)
                     for (ulong mask = board.GetPieceBitboard((PieceType)p + 1, stm > 0); mask != 0;)
                     {
                         mat += (int)(0x3847D12C4B064 >> 10 * p & 0x3FF);
+                        bucket++;
                         int sq = BitboardHelper.ClearAndGetIndexOfLSB(ref mask);
 
                         // Add feature from each perspective
-                        updateAccumulator(0, 384 - stm * 384 + p * 64 + sq);
-                        updateAccumulator(1, stm * 384 + p * 64 + (sq ^ 56));
+                        updateAccumulator(0, 384 - stm + p * 64 + sq);
+                        updateAccumulator(1, stm + p * 64 + sq ^ 56);
                     }
                 mat = -mat;
             }
 
+            bucket /= 4;
+
             // Initialise with output bias
-            int bucket = (BitboardHelper.GetNumberOfSetBits(board.AllPiecesBitboard) - 2) / 4,
-                eval = 8 * raw[1672 + bucket],
-                widx = 1544 + 16 * bucket;
+            int eval = 8 * raw[1672 + bucket];
 
             // Compute hidden -> output layer
             for (int i = 0; i < 16;)
-                eval += Math.Clamp(accumulators[i / 8 ^ (board.IsWhiteToMove ? 0 : 1), i % 8], 0, 32) * raw[widx + i++];
+                eval += Math.Clamp(accumulators[i / 8 ^ (board.IsWhiteToMove ? 0 : 1), i % 8], 0, 32) * raw[1544 + 16 * bucket + i++];
 
             // Scale + Material Factoriser
             return eval * 400 / 1024 + (board.IsWhiteToMove ? mat : -mat);
