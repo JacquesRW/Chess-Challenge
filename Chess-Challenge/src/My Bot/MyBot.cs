@@ -3,38 +3,11 @@ using System;
 
 public class MyBot : IChessBot
 {
-#if UCI
-    public ulong nodes = 0;
-#endif
-
-    readonly int[] weights = new int[6152];
-    readonly int[] raw = new int[1680];
     readonly (ulong, Move, int, int, byte)[] tt = new (ulong, Move, int, int, byte)[1048576];
 
-    public MyBot()
-    {
-        int i;
-        for (i = 0; i < 1680;)
-        {
-            var packed = decimal.GetBits(packedWeights[i / 16]);
-            int num = i % 16 * 6;
-            uint adj = (uint)packed[num / 32] >> num % 32 & 63;
-            if (num == 30) adj += ((uint)packed[1] & 15) << 2;
-            if (num == 60) adj += ((uint)packed[2] & 3) << 4;
-            raw[i++] = (int)adj - 31;
-        }
-
-        for (i = 0; i < 6144;)
-        {
-            int sq = i / 8 % 64, pc = i / 512 * 128 + i % 8;
-            weights[i++] = raw[pc + sq / 8 * 8] + raw[pc + 64 + sq % 8 * 8];
-        }
-
-        for (; i < 6152;)
-            weights[i] = raw[i++ - 4608];
-    }
-
 #if UCI
+    public ulong nodes = 0;
+
     public Move Think(Board board, Timer timer)
     {
         return ThinkInternal(board, timer);
@@ -234,6 +207,32 @@ public class MyBot : IChessBot
             // Scale + Material Factoriser
             return eval * 400 / 1024 + (board.IsWhiteToMove ? mat : -mat);
         }
+    }
+
+    readonly int[] weights = new int[6152];
+    readonly int[] raw = new int[1680];
+
+    public MyBot()
+    {
+        int i;
+        for (i = 0; i < 1680;)
+        {
+            var packed = decimal.GetBits(packedWeights[i / 16]);
+            int num = i % 16 * 6;
+            uint adj = (uint)packed[num / 32] >> num % 32 & 63;
+            if (num == 30) adj += ((uint)packed[1] & 15) << 2;
+            if (num == 60) adj += ((uint)packed[2] & 3) << 4;
+            raw[i++] = (int)adj - 31;
+        }
+
+        for (i = 0; i < 6144;)
+        {
+            int sq = i / 8 % 64, pc = i / 512 * 128 + i % 8;
+            weights[i++] = raw[pc + sq / 8 * 8] + raw[pc + 64 + sq % 8 * 8];
+        }
+
+        for (; i < 6152;)
+            weights[i] = raw[i++ - 4608];
     }
 
     readonly decimal[] packedWeights = {
