@@ -7,33 +7,22 @@ public class MyBot : IChessBot
 
 #if UCI
     public ulong nodes = 0;
-
-    public Move Think(Board board, Timer timer)
-    {
-        return ThinkInternal(board, timer);
-    }
-
-    public Move ThinkInternal(Board board, Timer timer, int maxDepth = 50, bool report = true)
-#else
-    public Move Think(Board board, Timer timer)
+    public int maxDepth = 50;
+    public bool report = true;
 #endif
+
+    public Move Think(Board board, Timer timer)
     {
         Move bestMoveRoot = default;
         var killers = new Move[128];
         var history = new int[4096];
         int iterDepth = 1;
+
 #if UCI
         nodes = 0;
         for (iterDepth = 1; iterDepth <= maxDepth && timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30;)
-#else
-        while (timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30)
-#endif
         {
-#if UCI
-            int score =
-#endif
-            Search(-30000, 30000, iterDepth++, 0);
-#if UCI
+            int score = Search(-30000, 30000, iterDepth++, 0);
             if (report && timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30)
             {
                 ulong time = (ulong)timer.MillisecondsElapsedThisTurn;
@@ -42,8 +31,11 @@ public class MyBot : IChessBot
                     $"info depth {iterDepth} score cp {score} time {time} nodes {nodes} nps {nps}"
                 );
             }
-#endif
         }
+#else
+        while (timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30)
+            Search(-30000, 30000, iterDepth++, 0);
+#endif
 
         return bestMoveRoot;
 

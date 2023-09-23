@@ -110,10 +110,12 @@ namespace ChessChallenge.Application
                 stopwatch.Start();
 
                 ulong nodes = 0;
+                bot.maxDepth = 7;
+                bot.report = false;
 
                 foreach (string fen in fens) {
                     Board board = Board.CreateBoardFromFEN(fen);
-                    bot.ThinkInternal(board, timer, 7, false);
+                    bot.Think(board, timer);
                     nodes += bot.nodes;
                 }
 
