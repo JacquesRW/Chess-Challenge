@@ -53,7 +53,7 @@ public class MyBot : IChessBot
 #endif
             ulong key = board.ZobristKey;
             var (ttKey, ttMove, ttDepth, score, ttFlag) = tt[key % 1048576];
-            int bestScore = -30000;
+            int bestScore = -30000, moveIdx = 0;
 
             // Check for draw by repetition
             if (ply > 0
@@ -87,7 +87,6 @@ public class MyBot : IChessBot
                 return qs ? alpha : inCheck ? ply - 30_000 : 0;
 
             // Score moves
-            int moveIdx = 0;
             var scores = new int[moves.Length];
             foreach (Move move in moves)
                 scores[moveIdx++] = -(
