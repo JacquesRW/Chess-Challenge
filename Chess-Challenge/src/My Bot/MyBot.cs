@@ -33,7 +33,7 @@ public class MyBot : IChessBot
             }
         }
 #else
-        while (timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30)
+        while (iterDepth < 64 && timer.MillisecondsElapsedThisTurn < timer.MillisecondsRemaining / 30)
             Search(-30000, 30000, iterDepth++, 0);
 #endif
 
